@@ -38,6 +38,14 @@ dependencies {
     implementation(libs.material)
     implementation(libs.activity)
     implementation(libs.constraintlayout)
+    
+    // Thư viện Google ML Kit OCR (Giữ nguyên vì group này đúng)
+    implementation(libs.play.services.mlkit.text.recognition)
+
+    // Thư viện Google ML Kit Dịch và Nhận diện ngôn ngữ (Đã sửa alias)
+    implementation(libs.mlkit.language.id)
+    implementation(libs.mlkit.translate)
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
