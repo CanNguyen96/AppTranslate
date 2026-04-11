@@ -16,6 +16,7 @@ import com.ptithcm.apptranslate.models.OcrLine;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Executor;
 
 public class TextRecognizer {
 
@@ -83,6 +84,43 @@ public class TextRecognizer {
                     }
                 })
                 .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        listener.onFailure(e);
+                    }
+                });
+    }
+
+    /**
+     * Same as recognizeLines() but allows supplying an Executor for callbacks.
+     * Useful when you want to keep OCR + post-processing off the main thread.
+     */
+    public void recognizeLines(
+            @NonNull Bitmap bitmap,
+            @NonNull Executor callbackExecutor,
+            @NonNull final OnLinesRecognizedListener listener
+    ) {
+        InputImage image = InputImage.fromBitmap(bitmap, 0);
+        recognizer.process(image)
+                .addOnSuccessListener(callbackExecutor, new OnSuccessListener<Text>() {
+                    @Override
+                    public void onSuccess(Text visionText) {
+                        List<OcrLine> lines = new ArrayList<>();
+                        for (Text.TextBlock block : visionText.getTextBlocks()) {
+                            for (Text.Line line : block.getLines()) {
+                                String txt = line.getText();
+                                if (txt == null) continue;
+                                txt = txt.trim();
+                                if (txt.isEmpty()) continue;
+
+                                Rect box = line.getBoundingBox();
+                                lines.add(new OcrLine(txt, box != null ? new Rect(box) : null));
+                            }
+                        }
+                        listener.onSuccess(lines);
+                    }
+                })
+                .addOnFailureListener(callbackExecutor, new OnFailureListener() {
                     @Override
                     public void onFailure(@NonNull Exception e) {
                         listener.onFailure(e);

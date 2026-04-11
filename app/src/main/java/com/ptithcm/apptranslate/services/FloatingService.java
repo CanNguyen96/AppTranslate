@@ -28,6 +28,7 @@ import androidx.core.app.NotificationManagerCompat;
 
 import com.ptithcm.apptranslate.R;
 import com.ptithcm.apptranslate.activities.CaptureHelperActivity;
+import com.ptithcm.apptranslate.utils.PermissionUtils;
 
 public class FloatingService extends Service {
 
@@ -38,8 +39,19 @@ public class FloatingService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-        
-        startForegroundService();
+
+        // Overlay permission is mandatory for showing the bubble.
+        if (!PermissionUtils.hasOverlayPermission(this)) {
+            Toast.makeText(this, "Chưa có quyền Overlay. Vui lòng mở app và cấp quyền hiển thị trên ứng dụng khác.", Toast.LENGTH_LONG).show();
+            stopSelf();
+            return;
+        }
+
+        if (!startForegroundServiceSafely()) {
+            // If we can't become a foreground service, we cannot keep running reliably.
+            stopSelf();
+            return;
+        }
 
         windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
         floatingView = LayoutInflater.from(this).inflate(R.layout.layout_floating_button, null);
@@ -62,18 +74,39 @@ public class FloatingService extends Service {
         params.x = 100;
         params.y = 100;
 
-        windowManager.addView(floatingView, params);
+        try {
+            windowManager.addView(floatingView, params);
+        } catch (SecurityException se) {
+            Log.e("FLOATING", "Overlay permission denied while adding view", se);
+            Toast.makeText(this, "Không thể hiển thị nút nổi (thiếu quyền Overlay).", Toast.LENGTH_LONG).show();
+            stopSelf();
+            return;
+        } catch (Exception e) {
+            Log.e("FLOATING", "Failed to add floating view", e);
+            Toast.makeText(this, "Không thể hiển thị nút nổi.", Toast.LENGTH_LONG).show();
+            stopSelf();
+            return;
+        }
         setupTouchListener();
     }
 
-    private void startForegroundService() {
+    private boolean startForegroundServiceSafely() {
         String CHANNEL_ID = "floating_service_channel";
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel channel = new NotificationChannel(CHANNEL_ID,
                     "Floating Service Channel",
                     NotificationManager.IMPORTANCE_LOW);
             NotificationManager manager = getSystemService(NotificationManager.class);
-            manager.createNotificationChannel(channel);
+            if (manager != null) manager.createNotificationChannel(channel);
+        }
+
+        // If notifications are blocked, startForeground may be denied/crash on newer Android.
+        try {
+            if (!NotificationManagerCompat.from(this).areNotificationsEnabled()) {
+                Toast.makeText(this, "Hãy bật Thông báo cho ứng dụng để chạy chế độ dịch nền.", Toast.LENGTH_LONG).show();
+                return false;
+            }
+        } catch (Exception ignored) {
         }
 
         Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
@@ -82,10 +115,22 @@ public class FloatingService extends Service {
                 .setSmallIcon(android.R.drawable.ic_menu_search)
                 .build();
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-            startForeground(1, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE);
-        } else {
-            startForeground(1, notification);
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                startForeground(1, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE);
+            } else {
+                startForeground(1, notification);
+            }
+            return true;
+        } catch (SecurityException se) {
+            Log.e("FLOATING", "startForeground denied (missing notification permission/settings?)", se);
+            Toast.makeText(this, "Không thể chạy dịch nền: hãy bật Thông báo cho ứng dụng.", Toast.LENGTH_LONG).show();
+            return false;
+        } catch (RuntimeException re) {
+            // ForegroundServiceStartNotAllowedException is a RuntimeException on some Android versions.
+            Log.e("FLOATING", "startForeground failed", re);
+            Toast.makeText(this, "Không thể chạy dịch nền lúc này. Mở app và thử lại.", Toast.LENGTH_LONG).show();
+            return false;
         }
     }
 
@@ -184,7 +229,10 @@ public class FloatingService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        if (floatingView != null) windowManager.removeView(floatingView);
+        try {
+            if (floatingView != null && windowManager != null) windowManager.removeView(floatingView);
+        } catch (Exception ignored) {
+        }
     }
 
     @Nullable

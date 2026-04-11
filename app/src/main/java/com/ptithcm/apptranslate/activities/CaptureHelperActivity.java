@@ -28,11 +28,31 @@ public class CaptureHelperActivity extends ComponentActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        final MediaProjectionManager mpManager = (MediaProjectionManager) getSystemService(Context.MEDIA_PROJECTION_SERVICE);
+        if (mpManager == null) {
+            Toast.makeText(this, "Thiết bị không hỗ trợ MediaProjection", Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
+
         // If we already have an active projection session, skip the consent UI.
         if (MediaProjectionSession.isActive()) {
             Log.d("CAPTURE", "MediaProjection session active -> skip consent UI and trigger capture");
             Intent serviceIntent = new Intent(CaptureHelperActivity.this, ScreenCaptureService.class);
             serviceIntent.setAction(ScreenCaptureService.ACTION_CAPTURE_ONCE);
+            ContextCompat.startForegroundService(CaptureHelperActivity.this, serviceIntent);
+            finish();
+            return;
+        }
+
+        // If we have a saved consent token (in-memory), we can recreate MediaProjection without
+        // showing the consent UI again.
+        if (MediaProjectionTokenStore.hasToken()) {
+            Log.d("CAPTURE", "Have MediaProjection token -> start service (no consent UI)");
+            Intent serviceIntent = new Intent(CaptureHelperActivity.this, ScreenCaptureService.class);
+            serviceIntent.setAction(ScreenCaptureService.ACTION_START_PROJECTION);
+            serviceIntent.putExtra("RESULT_CODE", MediaProjectionTokenStore.getResultCode());
+            serviceIntent.putExtra("RESULT_DATA", MediaProjectionTokenStore.getResultData());
             ContextCompat.startForegroundService(CaptureHelperActivity.this, serviceIntent);
             finish();
             return;
@@ -59,11 +79,11 @@ public class CaptureHelperActivity extends ComponentActivity {
 
                             MediaProjectionTokenStore.save(resultCode, data);
 
+                            // Always let the service create MediaProjection under an FGS(mediaProjection).
                             Intent serviceIntent = new Intent(CaptureHelperActivity.this, ScreenCaptureService.class);
                             serviceIntent.setAction(ScreenCaptureService.ACTION_START_PROJECTION);
                             serviceIntent.putExtra("RESULT_CODE", resultCode);
                             serviceIntent.putExtra("RESULT_DATA", data);
-
                             Log.d("CAPTURE", "Starting ScreenCaptureService with extras: RESULT_CODE=" + resultCode + ", RESULT_DATA=" + (data != null));
                             ContextCompat.startForegroundService(CaptureHelperActivity.this, serviceIntent);
                         } else {
@@ -78,13 +98,7 @@ public class CaptureHelperActivity extends ComponentActivity {
                 }
         );
 
-        MediaProjectionManager mpManager = (MediaProjectionManager) getSystemService(Context.MEDIA_PROJECTION_SERVICE);
-        if (mpManager != null) {
-            // Launch consent UI
-            captureLauncher.launch(mpManager.createScreenCaptureIntent());
-        } else {
-            Toast.makeText(this, "Thiết bị không hỗ trợ MediaProjection", Toast.LENGTH_SHORT).show();
-            finish();
-        }
+        // Launch consent UI
+        captureLauncher.launch(mpManager.createScreenCaptureIntent());
     }
 }

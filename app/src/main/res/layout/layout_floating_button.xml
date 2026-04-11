@@ -10,7 +10,7 @@
         android:layout_width="60dp"
         android:layout_height="60dp"
         android:layout_margin="8dp"
-        app:cardBackgroundColor="@color/purple_500"
+        app:cardBackgroundColor="@color/white"
         app:cardCornerRadius="30dp"
         app:cardElevation="8dp">
 
@@ -20,6 +20,7 @@
             android:layout_height="match_parent"
             android:padding="12dp"
             android:src="@android:drawable/ic_menu_search"
+            android:background="@color/blue"
             android:contentDescription="Translate Button" />
 
     </androidx.cardview.widget.CardView>
