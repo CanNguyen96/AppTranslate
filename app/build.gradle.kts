@@ -42,9 +42,17 @@ dependencies {
     // Thư viện Google ML Kit OCR (Giữ nguyên vì group này đúng)
     implementation(libs.play.services.mlkit.text.recognition)
 
+    // OCR tiếng Trung (để đọc được chữ Trung trong ảnh màn hình)
+    implementation(libs.mlkit.text.recognition.chinese)
+
     // Thư viện Google ML Kit Dịch và Nhận diện ngôn ngữ (Đã sửa alias)
     implementation(libs.mlkit.language.id)
     implementation(libs.mlkit.translate)
+
+    // Navigation Component
+    implementation(libs.navigation.fragment)
+    implementation(libs.navigation.ui)
+    implementation(libs.fragment)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)

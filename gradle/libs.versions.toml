@@ -10,6 +10,9 @@ constraintlayout = "2.2.1"
 playServicesMlkitTextRecognition = "19.0.1"
 mlkitLanguageId = "17.0.6"
 mlkitTranslate = "17.0.3"
+mlkitTextRecognitionChinese = "16.0.0"
+navigation = "2.7.7"
+fragment = "1.8.6"
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -23,6 +26,10 @@ play-services-mlkit-text-recognition = { group = "com.google.android.gms", name 
 # Sửa lại group ở đây
 mlkit-language-id = { group = "com.google.mlkit", name = "language-id", version.ref = "mlkitLanguageId" }
 mlkit-translate = { group = "com.google.mlkit", name = "translate", version.ref = "mlkitTranslate" }
+mlkit-text-recognition-chinese = { group = "com.google.mlkit", name = "text-recognition-chinese", version.ref = "mlkitTextRecognitionChinese" }
+navigation-fragment = { group = "androidx.navigation", name = "navigation-fragment", version.ref = "navigation" }
+navigation-ui = { group = "androidx.navigation", name = "navigation-ui", version.ref = "navigation" }
+fragment = { group = "androidx.fragment", name = "fragment", version.ref = "fragment" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

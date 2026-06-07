@@ -440,6 +440,7 @@ public class OnDeviceTranslator {
         // MVP: ưu tiên các ngôn ngữ mình hỗ trợ
         if (translated.equals(TranslateLanguage.ENGLISH)
                 || translated.equals(TranslateLanguage.VIETNAMESE)
+                || translated.equals(SupportedLang.ZH.mlKitCode)
                 || translated.equals(TranslateLanguage.JAPANESE)
                 || translated.equals(TranslateLanguage.KOREAN)) {
             return translated;

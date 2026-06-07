@@ -596,7 +596,9 @@ public class ScreenCaptureService extends Service {
                 croppedBitmap.recycle();
             }
 
-            textRecognizer.recognizeLines(bitmapForOcr, captureExecutor, new TextRecognizer.OnLinesRecognizedListener() {
+            SupportedLang ocrHint = LanguageManager.getSourceLang();
+
+            textRecognizer.recognizeLines(bitmapForOcr, ocrHint, captureExecutor, new TextRecognizer.OnLinesRecognizedListener() {
                 @Override
                 public void onSuccess(List<OcrLine> lines) {
                     if (bitmapForOcr != null && !bitmapForOcr.isRecycled()) {
